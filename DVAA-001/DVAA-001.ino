@@ -1,7 +1,6 @@
 #include <SoftwareSerial.h>
-#include <EEPROM.h>
 
-SoftwareSerial BT (9, 8);
+SoftwareSerial BT(9, 8);
 
 //pines relays puerta central
 #define pc1 2
@@ -10,11 +9,12 @@ SoftwareSerial BT (9, 8);
 //pines relays puerta izquierda
 #define pi1 4
 #define pi2 5
-#define sensorPi A1
+#define sensorPi A2
 //pines relays puerta derecha
 #define pd1 6
 #define pd2 7
-#define sensorPd A2
+#define sensorPd A1
+
 
 
 void setup() {
@@ -31,6 +31,9 @@ void setup() {
   pinMode(5, OUTPUT);
   pinMode(6, OUTPUT);
   pinMode(7, OUTPUT);
+  /*
+    pinMode(8, OUTPUT);
+    pinMode(9, OUTPUT);*/
 
   //declaracion de entradas
   pinMode(A0, INPUT);
@@ -57,7 +60,7 @@ void loop() {
     char dataSerial = Serial.read();
     char dataBT = BT.read();
 
-    if (val == 'a' || valBt == 'a') {
+    if (dataSerial == 'a' || dataBT == 'a') {
 
       Serial.println("Moviendo puertas");
       BT.println("Moviendo puertas");
@@ -68,7 +71,7 @@ void loop() {
       BT.println("Listo");
     }
 
-    if (val == 'b' || valBt == 'b') {
+    if (dataSerial == 'b' || dataBT == 'b') {
 
       Serial.println("Moviendo puertas");
       BT.println("Moviendo puertas");
@@ -79,7 +82,7 @@ void loop() {
       BT.println("Listo");
     }
 
-    if (val == 'c' || valBt == 'c') {
+    if (dataSerial == 'c' || dataBT == 'c') {
 
       Serial.println("Moviendo puertas");
       BT.println("Moviendo puertas");
@@ -90,7 +93,7 @@ void loop() {
       BT.println("Listo");
     }
 
-    if (val == 'd' || valBt == 'd') {
+    if (dataSerial == 'd' || dataBT == 'd') {
 
       Serial.println("Moviendo puertas");
       BT.println("Moviendo puertas");
@@ -100,10 +103,44 @@ void loop() {
       Serial.println("Listo");
       BT.println("Listo");
     }
+
+    if (dataSerial == 'x' || dataBT == 'x') {
+
+      Serial.println("Moviendo puerta central");
+      BT.println("Moviendo puerta central");
+
+      puertaCentral();
+
+      Serial.println("Listo");
+      BT.println("Listo");
+    }
+
+    if (dataSerial == 'y' || dataBT == 'y') {
+
+      Serial.println("Moviendo puerta derecha");
+      BT.println("Moviendo puerta derecha");
+
+      puertaDerecha();
+
+      Serial.println("Listo");
+      BT.println("Listo");
+    }
+
+    if (dataSerial == 'z' || dataBT == 'z') {
+
+      Serial.println("Moviendo puerta izquierda");
+      BT.println("Moviendo puerta izquierda");
+
+      puertaIzquierda();
+
+      Serial.println("Listo");
+      BT.println("Listo");
+    }
   }
 }
 
 void corralA() {
+
   if (digitalRead(sensorPc) == 0) {
     digitalWrite(pc1, LOW);
     delay(200);
@@ -115,6 +152,8 @@ void corralA() {
     delay(200);
     digitalWrite(pd1, HIGH);
   }
+
+    delay(1000);
 
   if (digitalRead(sensorPi) == 1) {
     digitalWrite(pi1, LOW);
@@ -131,6 +170,8 @@ void corralB() {
     digitalWrite(pd1, HIGH);
   }
 
+    delay(1000);
+
   if (digitalRead(sensorPi) == 0) {
     digitalWrite(pi2, LOW);
     delay(200);
@@ -146,6 +187,8 @@ void corralC() {
     digitalWrite(pi1, HIGH);
   }
 
+  delay(1000);
+
   if (digitalRead(sensorPd) == 1) {
     digitalWrite(pd2, LOW);
     delay(200);
@@ -154,6 +197,7 @@ void corralC() {
 }
 
 void corralD() {
+
   if (digitalRead(sensorPc) == 1) {
     digitalWrite(pc2, LOW);
     delay(200);
@@ -166,9 +210,66 @@ void corralD() {
     digitalWrite(pd1, HIGH);
   }
 
+    delay(1000);
+
   if (digitalRead(sensorPi) == 1) {
     digitalWrite(pi1, LOW);
     delay(200);
     digitalWrite(pi1, HIGH);
+  }
+}
+
+void puertaCentral() {
+
+  if (digitalRead(sensorPc) == 0) {
+    digitalWrite(pc1, LOW);
+    delay(200);
+    digitalWrite(pc1, HIGH);
+  } else {
+    digitalWrite(pc2, LOW);
+    delay(200);
+    digitalWrite(pc2, HIGH);
+  }
+}
+
+void puertaDerecha() {
+
+  if (digitalRead(sensorPi) == 1) {
+    digitalWrite(pi1, LOW);
+    delay(200);
+    digitalWrite(pi1, HIGH);
+  }
+  
+  delay(1000);
+
+  if (digitalRead(sensorPd) == 0) {
+    digitalWrite(pd1, LOW);
+    delay(200);
+    digitalWrite(pd1, HIGH);
+  } else {
+    digitalWrite(pd2, LOW);
+    delay(200);
+    digitalWrite(pd2, HIGH);
+  }
+}
+
+void puertaIzquierda() {
+
+  if (digitalRead(sensorPd) == 0) {
+    digitalWrite(pd1, LOW);
+    delay(200);
+    digitalWrite(pd1, HIGH);
+  }
+
+  delay(1000);
+
+  if (digitalRead(sensorPi) == 1) {
+    digitalWrite(pi1, LOW);
+    delay(200);
+    digitalWrite(pi1, HIGH);
+  } else {
+    digitalWrite(pi2, LOW);
+    delay(200);
+    digitalWrite(pi2, HIGH);
   }
 }
