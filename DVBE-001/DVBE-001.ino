@@ -30,6 +30,18 @@ SoftwareSerial BT(pinTx, pinRx);
 #define pesoMinDefault 50
 #define tiempo 10
 
+//Valores por defecto correccion de peso
+#define PESOMIN 1
+#define PESOMAX 5000
+
+//Valores por defecto peso minimo estable
+#define PESOESTMIN 5
+#define PESOESTMAX 500
+
+//Valores por defecto velocidad de estabilizacion
+#define VELESTMIN 0.1
+#define VELESTMAX 10
+
 //Parametros de configuracion
 float variacion;
 float escala;
@@ -44,7 +56,6 @@ void setup()
 {
 
   //Inicio de puertos
-  Serial.begin(9600);
   BT.begin(9600);
   balanza.begin(pinDt, pinSck);
 
@@ -97,24 +108,17 @@ void loop()
     Serial.println("");*/
 
   //Pulsar led en el caso de estar buscando conexion BT (Solo para HM-10,HC-05)
-  while (digitalRead(pinState) == 0)
-  {
-    condicion = 1;
-    digitalWrite(pinLed, LOW);
-    delay(1000);
-    digitalWrite(pinLed, HIGH);
-    delay(1000);
-  }
-  digitalWrite(pinLed, LOW);
+  busquedaConexion();
 
-  // Mensaje para configurador serial (solo se ve una vez cuando establesco conexion)
-  if (digitalRead(pinState) == 1 && condicion == 1)
-  {
-    condicion = 0;
-    BT.println("Escriba 'm' + 'Enviar' para ingresar al menu de configuracion de balanza");
-    delay(2000);
-  }
+  //Devuelve el peso por BT y verifica el algoritmo de estabilizacion
+  pesar();
 
+  //Lee datos del puerto BT
+  verificarBt();
+}
+
+void pesar()
+{
   pesoAnt = balanza.get_units(2);
   peso = balanza.get_units(2);
   pesoSig = balanza.get_units(2);
@@ -124,41 +128,13 @@ void loop()
   delay(tiempo);
 
   estable();
-
-  //Lee datos del puerto BT
-  if (BT.available())
-  {
-    String lecturaString = BT.readStringUntil('\n');
-    char lectura = lecturaString.charAt(0);
-
-    switch (lectura)
-    {
-    case 'A':
-      autoConfig(lecturaString);
-      break;
-
-    case 'G':
-      eepromGuardar(true);
-      break;
-
-    case 'R':
-      eepromReset(true);
-      break;
-
-    case 'T':
-      Serial.println("Destarando");
-      balanza.tare(10);
-      break;
-
-    case 'm':
-      menu();
-      break;
-    }
-  }
 }
 
 void estable()
 {
+  /*Esta funcion verifica los 3 pesos obtenidos y compara
+si el peso se encuentra dentro del margen comparado con el
+peso anterior y el peso siguiente*/
 
   if (abs(pesoAnt - peso) <= variacion && abs(pesoSig - peso) <= variacion && abs(peso) > pesoMin)
   {
@@ -167,15 +143,6 @@ void estable()
 
     while (peso > pesoMin)
     {
-
-      //Recoleccion de datos EXCEL
-      /*Serial.print("DATA,TIME,TIMER,");
-        Serial.print(peso);
-        Serial.print(",");
-        Serial.print("0");
-        Serial.print(",");
-        Serial.print(pesoEst);
-        Serial.println(" ,");*/
 
       //Imprime datos en puerto BT
       BT.println("E" + (String)round(pesoEst));
@@ -205,8 +172,66 @@ void estable()
   }
 }
 
+void repesado()
+{
+  /*funcion creeada para que cuando recibe varias taras en la reestabilizacion 
+  del peso no me haga un a tara a cero se logro quitando la capacidad de lectura
+  mientras hace el repesaje*/
+
+  BT.read(); //Limpiar Buffer
+
+  pesoAnt = balanza.get_units(2);
+  peso = balanza.get_units(2);
+  pesoSig = balanza.get_units(2);
+
+  //Imprime datos en el puerto BT
+  BT.println("P" + (String)round(pesoSig));
+  delay(tiempo);
+
+  while (BT.available())
+  {
+    BT.read();
+  }
+}
+
+void verificarBt()
+{
+  if (BT.available())
+  {
+    String lecturaString = BT.readStringUntil('\n');
+    char lectura = lecturaString.charAt(0);
+
+    switch (lectura)
+    {
+    case 'A':
+      autoConfig(lecturaString);
+      break;
+
+    case 'G':
+      eepromGuardar(true);
+      break;
+
+    case 'R':
+      eepromReset(true);
+      break;
+
+    case 'T':
+      balanza.tare(10);
+      break;
+
+    case 'm':
+      menu();
+      break;
+    }
+  }
+}
+
 void menu()
 {
+  /*Esta funcion muestra el meno para hacer configuraciones por algun
+  monitor serial Bluetooth. La opcion false que aparece como parametro de algunos
+  llamados a funciones es para indicarle que no esta ejecutando la funcion en modo 
+  autoconfig*/
 
   char dato;
 
@@ -232,13 +257,13 @@ void menu()
 
   case 'b':
     BT.println("Peso minimo estable actual: " + (String)pesoMin);
-    BT.println("Ingrese un valor de 10 a 500 o 's' para salir");
+    BT.println("Ingrese un valor de " + String(PESOESTMIN) + " a " + String(PESOESTMAX) + " o 's' para salir");
     pesoMinF(0, false);
     break;
 
   case 'c':
     BT.println("Velocidad de Estabilizacion: " + (String)variacion);
-    BT.println("Ingrese un valor de 0,1 a 5 o 's' para salir");
+    BT.println("Ingrese un valor de " + String(VELESTMIN) + " a " + String(VELESTMAX) + " o 's' para salir");
     variacionF(0, false);
     break;
 
@@ -262,33 +287,6 @@ void menu()
   }
 }
 
-//funcion creeada para que cuando recibe varias taras en la reestabilizacion del peso no me haga un a tara a cero se logro quitando la capacidad de lectura mientras hace el repesaje
-void repesado()
-{
-  BT.read(); //Limpiar Buffer
-  //Recoleccion de datos EXCEL
-  /* Serial.print("DATA,TIME,TIMER,");
-    Serial.print(peso);
-    Serial.print(",");
-    Serial.print(peso - pesoAnt);
-    Serial.print(",");
-    Serial.print("0");
-    Serial.println("");*/
-
-  pesoAnt = balanza.get_units(2);
-  peso = balanza.get_units(2);
-  pesoSig = balanza.get_units(2);
-
-  //Imprime datos en el puerto BT
-  BT.println("P" + (String)round(pesoSig));
-  delay(tiempo);
-
-  while (BT.available())
-  {
-    BT.read();
-  }
-}
-
 void correccionPesoF(float valor, bool autoconfig)
 {
 
@@ -296,7 +294,6 @@ void correccionPesoF(float valor, bool autoconfig)
   char strAux;
   float correccionAux = 0;
   float lecturaAux;
-  float promedio = 0;
 
   BT.read(); //limpiar buffer
   BT.read();
@@ -312,7 +309,6 @@ void correccionPesoF(float valor, bool autoconfig)
   }
   else
   {
-
     str = BT.readStringUntil('\n');
     strAux = str.charAt(0);
     correccionAux = str.toFloat();
@@ -322,9 +318,8 @@ void correccionPesoF(float valor, bool autoconfig)
   {
     menu();
   }
-  else if (correccionAux >= 1 && correccionAux <= 5000)
+  else if (correccionAux >= PESOMIN && correccionAux <= PESOMAX)
   {
-
     correccion = correccionAux;
 
     balanza.set_scale(1);
@@ -357,8 +352,7 @@ void correccionPesoF(float valor, bool autoconfig)
     }
     else
     {
-
-      BT.println("Valor incorrecto\nIngrese un valor de 1 a 5000");
+      BT.println("Valor incorrecto\nIngrese un valor de " + String(PESOMIN) + " a " + String(PESOMAX));
       correccionPesoF(0, false);
     }
   }
@@ -418,7 +412,7 @@ void pesoMinF(float valor, bool autoconfig)
     }
     else
     {
-      BT.println("Valor incorrecto\nIngrese un valor de 10 a 500");
+      BT.println("Valor incorrecto\nIngrese un valor de " + String(PESOESTMIN) + " a " + String(PESOESTMAX));
       pesoMinF(0, false);
     }
   }
@@ -481,7 +475,7 @@ void variacionF(float valor, bool autoconfig)
     }
     else
     {
-      BT.println("Valor incorrecto\nIngrese un valor de 0,1 a 5");
+      BT.println("Valor incorrecto\nIngrese un valor de " + String(VELESTMIN) + " a " + String(VELESTMAX));
       variacionF(0, false);
     }
   }
@@ -494,8 +488,7 @@ void eepromGuardar(bool autoconfig)
 
   if (!autoconfig)
   {
-
-    BT.println("¿Desea guardar valores en la EEPROM s|n?");
+    BT.println("¿Desea guardar los valores establecidos s|n?");
 
     BT.read(); //limpiar buffer
     delay(2000);
@@ -510,7 +503,6 @@ void eepromGuardar(bool autoconfig)
     switch (confirmacion)
     {
     case 's':
-
       EEPROM.put(0, variacion);
       EEPROM.put(4, escala);
       EEPROM.put(8, correccion);
@@ -641,5 +633,26 @@ void autoConfig(String lecturaString)
     valor = valorStr.toFloat();
     variacionF(valor, true);
     break;
+  }
+}
+
+void busquedaConexion()
+{
+  while (digitalRead(pinState) == 0)
+  {
+    condicion = 1;
+    digitalWrite(pinLed, LOW);
+    delay(1000);
+    digitalWrite(pinLed, HIGH);
+    delay(1000);
+  }
+  digitalWrite(pinLed, LOW);
+
+  // Mensaje para configurador serial (solo se ve una vez cuando establesco conexion)
+  if (digitalRead(pinState) == 1 && condicion == 1)
+  {
+    condicion = 0;
+    BT.println("Escriba 'm' + 'Enviar' para ingresar al menu de configuracion de balanza");
+    delay(2000);
   }
 }
