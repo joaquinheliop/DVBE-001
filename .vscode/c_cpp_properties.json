@@ -2,19 +2,6 @@
     "version": 4,
     "configurations": [
         {
-            "name": "Win32",
-            "compilerPath": "C:\\MinGW\\bin\\gcc.exe",
-            "compilerArgs": [],
-            "intelliSenseMode": "windows-gcc-x86",
-            "includePath": [
-                "${default}"
-            ],
-            "forcedInclude": [],
-            "cStandard": "gnu11",
-            "cppStandard": "gnu++14",
-            "defines": []
-        },
-        {
             "name": "Arduino",
             "compilerPath": "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr\\bin\\avr-g++",
             "compilerArgs": [
@@ -30,9 +17,9 @@
             "includePath": [
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\variants\\eightanaloginputs",
+                "C:\\Users\\Joaquin\\Documents\\Arduino\\libraries\\HX711",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\libraries\\SoftwareSerial\\src",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\libraries\\EEPROM\\src",
-                "C:\\Program Files (x86)\\Arduino\\libraries\\HX711",
                 "c:\\program files (x86)\\arduino\\hardware\\tools\\avr\\lib\\gcc\\avr\\7.3.0\\include",
                 "c:\\program files (x86)\\arduino\\hardware\\tools\\avr\\lib\\gcc\\avr\\7.3.0\\include-fixed",
                 "c:\\program files (x86)\\arduino\\hardware\\tools\\avr\\avr\\include"
