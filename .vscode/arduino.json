@@ -1,0 +1,6 @@
+{
+    "configuration": "cpu=16MHzatmega328",
+    "board": "arduino:avr:pro",
+    "port": "COM6",
+    "sketch": "DVBE-001\\DVBE-001.ino"
+}

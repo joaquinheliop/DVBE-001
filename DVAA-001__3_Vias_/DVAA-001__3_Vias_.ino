@@ -1,19 +1,17 @@
-                                                           #include <SoftwareSerial.h>
+#include <SoftwareSerial.h>
 
-SoftwareSerial BT(9, 8);
-
-//pines relays puerta central
-#define pc1 2
-#define pc2 3
-#define sensorPc A0
+SoftwareSerial BT(9, 8);//TX RX
+#define btState 4
+//led indicador
+#define led A4
 //pines relays puerta izquierda
-#define pi1 4
-#define pi2 5
-#define sensorPi A2
+#define pi1 A3
+#define pi2 A2
+#define sensorPi 2
 //pines relays puerta derecha
-#define pd1 6
-#define pd2 7
-#define sensorPd A1
+#define pd1 A1
+#define pd2 A0
+#define sensorPd 3
 
 
 
@@ -21,32 +19,32 @@ void setup() {
 
   Serial.begin(9600);
   Serial.println("Serial iniciado");
-  BT.begin(9600);
+  BT.begin(38400);
   BT.println("BT iniciado");
 
   //declaracion salida relays
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
-  pinMode(5, OUTPUT);
-  pinMode(6, OUTPUT);
-  pinMode(7, OUTPUT);
+  pinMode(A0, OUTPUT);
+  pinMode(A1, OUTPUT);
+  pinMode(A2, OUTPUT);
+  pinMode(A3, OUTPUT);
+  pinMode(A4, OUTPUT);
+  pinMode(A5, OUTPUT);
   /*
     pinMode(8, OUTPUT);
     pinMode(9, OUTPUT);*/
 
   //declaracion de entradas
-  pinMode(A0, INPUT);
-  pinMode(A1, INPUT);
-  pinMode(A2, INPUT);
+  pinMode(2, INPUT_PULLUP);
+  pinMode(3, INPUT_PULLUP);
+  /*pinMode(A2, INPUT);*/
 
   // configuracion salidas
-  digitalWrite(2, HIGH);
-  digitalWrite(3, HIGH);
-  digitalWrite(4, HIGH);
-  digitalWrite(5, HIGH);
-  digitalWrite(6, HIGH);
-  digitalWrite(7, HIGH);
+  digitalWrite(A0, HIGH);
+  digitalWrite(A1, HIGH);
+  digitalWrite(A2, HIGH);
+  digitalWrite(A3, HIGH);
+  digitalWrite(A4, LOW);
+  digitalWrite(A5, HIGH);
 
   /*corrales se numeran a,b,c,d en sentido contrario a las agujas del reloj
     comenzando por corral superior a la izquierda*/
@@ -55,7 +53,13 @@ void setup() {
 }
 
 void loop() {
-
+  while (!digitalRead(btState)) {
+    digitalWrite(led, HIGH);
+    delay(3000);
+    digitalWrite(led, LOW);
+    delay(3000); 
+  }
+  digitalWrite(led, LOW);
   if (BT.available() || Serial.available()) {
     char dataSerial = Serial.read();
     char dataBT = BT.read();
@@ -93,28 +97,6 @@ void loop() {
       BT.println("Listo");
     }
 
-    if (dataSerial == 'd' || dataBT == 'd') {
-
-      Serial.println("Moviendo puertas");
-      BT.println("Moviendo puertas");
-
-      corralD();
-
-      Serial.println("Listo");
-      BT.println("Listo");
-    }
-
-    if (dataSerial == 'x' || dataBT == 'x') {
-
-      Serial.println("Moviendo puerta central");
-      BT.println("Moviendo puerta central");
-
-      puertaCentral();
-
-      Serial.println("Listo");
-      BT.println("Listo");
-    }
-
     if (dataSerial == 'y' || dataBT == 'y') {
 
       Serial.println("Moviendo puerta derecha");
@@ -141,21 +123,15 @@ void loop() {
 
 void corralA() {
 
-  if (digitalRead(sensorPc) == 0) {
-    digitalWrite(pc1, LOW);
-    delay(200);
-    digitalWrite(pc1, HIGH);
-  }
-
-  if (digitalRead(sensorPd) == 0) {
+  if (digitalRead(sensorPd) == 1) {
     digitalWrite(pd1, LOW);
     delay(200);
     digitalWrite(pd1, HIGH);
   }
 
-    delay(1000);
+  delay(1000);
 
-  if (digitalRead(sensorPi) == 1) {
+  if (digitalRead(sensorPi) == 0) {
     digitalWrite(pi1, LOW);
     delay(200);
     digitalWrite(pi1, HIGH);
@@ -164,15 +140,15 @@ void corralA() {
 
 void corralB() {
 
-  if (digitalRead(sensorPd) == 0) {
+  if (digitalRead(sensorPd) == 1) {
     digitalWrite(pd1, LOW);
     delay(200);
     digitalWrite(pd1, HIGH);
   }
 
-    delay(1000);
+  delay(1000);
 
-  if (digitalRead(sensorPi) == 0) {
+  if (digitalRead(sensorPi) == 1) {
     digitalWrite(pi2, LOW);
     delay(200);
     digitalWrite(pi2, HIGH);
@@ -181,7 +157,24 @@ void corralB() {
 
 void corralC() {
 
-  if (digitalRead(sensorPi) == 1) {
+  if (digitalRead(sensorPi) == 0) {
+    digitalWrite(pi1, LOW);
+    delay(200);
+    digitalWrite(pi1, HIGH);
+  }
+
+  delay(1000);
+
+  if (digitalRead(sensorPd) == 0) {
+    digitalWrite(pd2, LOW);
+    delay(200);
+    digitalWrite(pd2, HIGH);
+  }
+}
+
+void puertaDerecha() {
+
+  if (digitalRead(sensorPi) == 0) {
     digitalWrite(pi1, LOW);
     delay(200);
     digitalWrite(pi1, HIGH);
@@ -190,59 +183,6 @@ void corralC() {
   delay(1000);
 
   if (digitalRead(sensorPd) == 1) {
-    digitalWrite(pd2, LOW);
-    delay(200);
-    digitalWrite(pd2, HIGH);
-  }
-}
-
-void corralD() {
-
-  if (digitalRead(sensorPc) == 1) {
-    digitalWrite(pc2, LOW);
-    delay(200);
-    digitalWrite(pc2, HIGH);
-  }
-
-  if (digitalRead(sensorPd) == 0) {
-    digitalWrite(pd1, LOW);
-    delay(200);
-    digitalWrite(pd1, HIGH);
-  }
-
-    delay(1000);
-
-  if (digitalRead(sensorPi) == 1) {
-    digitalWrite(pi1, LOW);
-    delay(200);
-    digitalWrite(pi1, HIGH);
-  }
-}
-
-void puertaCentral() {
-
-  if (digitalRead(sensorPc) == 0) {
-    digitalWrite(pc1, LOW);
-    delay(200);
-    digitalWrite(pc1, HIGH);
-  } else {
-    digitalWrite(pc2, LOW);
-    delay(200);
-    digitalWrite(pc2, HIGH);
-  }
-}
-
-void puertaDerecha() {
-
-  if (digitalRead(sensorPi) == 1) {
-    digitalWrite(pi1, LOW);
-    delay(200);
-    digitalWrite(pi1, HIGH);
-  }
-  
-  delay(1000);
-
-  if (digitalRead(sensorPd) == 0) {
     digitalWrite(pd1, LOW);
     delay(200);
     digitalWrite(pd1, HIGH);
@@ -255,7 +195,7 @@ void puertaDerecha() {
 
 void puertaIzquierda() {
 
-  if (digitalRead(sensorPd) == 0) {
+  if (digitalRead(sensorPd) == 1) {
     digitalWrite(pd1, LOW);
     delay(200);
     digitalWrite(pd1, HIGH);
@@ -263,7 +203,7 @@ void puertaIzquierda() {
 
   delay(1000);
 
-  if (digitalRead(sensorPi) == 1) {
+  if (digitalRead(sensorPi) == 0) {
     digitalWrite(pi1, LOW);
     delay(200);
     digitalWrite(pi1, HIGH);
