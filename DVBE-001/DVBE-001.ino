@@ -122,7 +122,7 @@ void pesar()
   pesoAnt = balanza.get_units(2);
   peso = balanza.get_units(2);
   pesoSig = balanza.get_units(2);
-  delay(1000);
+
   //Imprime datos en el puerto BT
   BT.println("P" + (String)round(pesoSig));
   delay(tiempo);
@@ -152,22 +152,7 @@ peso anterior y el peso siguiente*/
       peso = balanza.get_units(5);
 
       //Lee datos del puerto BT para escuchar la tara
-      if (BT.available())
-      {
-        char lectura = BT.read();
-
-        switch (lectura)
-        {
-        case 'T':
-          repesado();
-          estable();
-          break;
-
-        case 'm':
-          menu();
-          break;
-        }
-      }
+      verificarBtEstable();
     }
   }
 }
@@ -217,6 +202,39 @@ void verificarBt()
 
     case 'T':
       balanza.tare(10);
+      break;
+
+    case 'm':
+      menu();
+      break;
+    }
+  }
+}
+
+void verificarBtEstable()
+{
+  if (BT.available())
+  {
+    String lecturaString = BT.readStringUntil('\n');
+    char lectura = lecturaString.charAt(0);
+
+    switch (lectura)
+    {
+    case 'A':
+      autoConfig(lecturaString);
+      break;
+
+    case 'G':
+      eepromGuardar(true);
+      break;
+
+    case 'R':
+      eepromReset(true);
+      break;
+
+    case 'T':
+      repesado();
+      estable();
       break;
 
     case 'm':
