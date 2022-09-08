@@ -5,12 +5,12 @@ SoftwareSerial BT(9, 8);//TX RX
 //led indicador
 #define led A4
 //pines relays puerta izquierda
-#define pi1 A3
-#define pi2 A2
+#define PIB A3
+#define PIA A2
 #define sensorPi 2
 //pines relays puerta derecha
-#define pd1 A1
-#define pd2 A0
+#define PDB A1
+#define PDA A0
 #define sensorPd 3
 
 
@@ -57,9 +57,9 @@ void loop() {
     digitalWrite(led, HIGH);
     delay(3000);
     digitalWrite(led, LOW);
-    delay(3000); 
+    delay(3000);
   }
-  digitalWrite(led, LOW);
+  digitalWrite(led, HIGH);
   if (BT.available() || Serial.available()) {
     char dataSerial = Serial.read();
     char dataBT = BT.read();
@@ -118,98 +118,137 @@ void loop() {
       Serial.println("Listo");
       BT.println("Listo");
     }
+
+    if (dataSerial == 'm' || dataBT == 'm') {
+
+      Serial.println("Modo automatico Activado");
+      BT.println("Modo automatico Activado");
+
+      modoAutomatico();
+
+      Serial.println("Listo");
+      BT.println("Listo");
+    }
   }
 }
 
 void corralA() {
 
-  if (digitalRead(sensorPd) == 1) {
-    digitalWrite(pd1, LOW);
+  if (digitalRead(sensorPd) == 0) {
+    digitalWrite(PDB, LOW);
     delay(200);
-    digitalWrite(pd1, HIGH);
-  }
-
-  delay(1000);
-
-  if (digitalRead(sensorPi) == 0) {
-    digitalWrite(pi1, LOW);
-    delay(200);
-    digitalWrite(pi1, HIGH);
-  }
-}
-
-void corralB() {
-
-  if (digitalRead(sensorPd) == 1) {
-    digitalWrite(pd1, LOW);
-    delay(200);
-    digitalWrite(pd1, HIGH);
+    digitalWrite(PDB, HIGH);
   }
 
   delay(1000);
 
   if (digitalRead(sensorPi) == 1) {
-    digitalWrite(pi2, LOW);
+    digitalWrite(PIA, LOW);
     delay(200);
-    digitalWrite(pi2, HIGH);
+    digitalWrite(PIA, HIGH);
+  }
+}
+
+void corralB() {
+
+  if (digitalRead(sensorPd) == 0) {
+    digitalWrite(PDB, LOW);
+    delay(200);
+    digitalWrite(PDB, HIGH);
+  }
+
+  delay(1000);
+
+  if (digitalRead(sensorPi) == 0) {
+    digitalWrite(PIB, LOW);
+    delay(200);
+    digitalWrite(PIB, HIGH);
   }
 }
 
 void corralC() {
 
-  if (digitalRead(sensorPi) == 0) {
-    digitalWrite(pi1, LOW);
+  if (digitalRead(sensorPi) == 1) {
+    digitalWrite(PIA, LOW);
     delay(200);
-    digitalWrite(pi1, HIGH);
+    digitalWrite(PIA, HIGH);
   }
 
   delay(1000);
 
-  if (digitalRead(sensorPd) == 0) {
-    digitalWrite(pd2, LOW);
+  if (digitalRead(sensorPd) == 1) {
+    digitalWrite(PDA, LOW);
     delay(200);
-    digitalWrite(pd2, HIGH);
+    digitalWrite(PDA, HIGH);
   }
 }
 
 void puertaDerecha() {
 
-  if (digitalRead(sensorPi) == 0) {
-    digitalWrite(pi1, LOW);
+  if (digitalRead(sensorPi) == 1) {
+    digitalWrite(PIA, LOW);
     delay(200);
-    digitalWrite(pi1, HIGH);
+    digitalWrite(PIA, HIGH);
   }
 
   delay(1000);
 
   if (digitalRead(sensorPd) == 1) {
-    digitalWrite(pd1, LOW);
+    digitalWrite(PDA, LOW);
     delay(200);
-    digitalWrite(pd1, HIGH);
+    digitalWrite(PDA, HIGH);
   } else {
-    digitalWrite(pd2, LOW);
+    digitalWrite(PDB, LOW);
     delay(200);
-    digitalWrite(pd2, HIGH);
+    digitalWrite(PDB, HIGH);
   }
 }
 
 void puertaIzquierda() {
 
-  if (digitalRead(sensorPd) == 1) {
-    digitalWrite(pd1, LOW);
+  if (digitalRead(sensorPd) == 0) {
+    digitalWrite(PDB, LOW);
     delay(200);
-    digitalWrite(pd1, HIGH);
+    digitalWrite(PDB, HIGH);
   }
 
   delay(1000);
 
   if (digitalRead(sensorPi) == 0) {
-    digitalWrite(pi1, LOW);
+    digitalWrite(PIB, LOW);
     delay(200);
-    digitalWrite(pi1, HIGH);
+    digitalWrite(PIB, HIGH);
   } else {
-    digitalWrite(pi2, LOW);
+    digitalWrite(PIA, LOW);
     delay(200);
-    digitalWrite(pi2, HIGH);
+    digitalWrite(PIA, HIGH);
   }
+}
+
+void modoAutomatico() {
+  char salida = 1;
+  while (salida != 's') {
+    if (BT.available()) {
+      salida = BT.read();
+    }
+    puertaIzquierda();
+    BT.println("Moviendo puerta Izquierda");
+     if (BT.available()) {
+      salida = BT.read();
+    }
+    delay(5000);
+     if (BT.available()) {
+      salida = BT.read();
+    }
+    puertaDerecha();
+    BT.println("Moviendo puerta Derecha");
+     if (BT.available()) {
+      salida = BT.read();
+    }
+    delay(5000);
+     if (BT.available()) {
+      salida = BT.read();
+    }
+  }
+  BT.println("Saliendo de modo automatico");
 }
